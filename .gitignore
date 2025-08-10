@@ -21,6 +21,7 @@ node_modules/
 
 # Ignore installed libraries, so they're not committed
 lib/
+cache/
 
 # Optional: Ignore IDE files
 *.swp
