@@ -2,6 +2,9 @@
 cache/
 out/
 
+# Lib folder (dependencies)
+lib/
+
 # Ignores development broadcast logs
 !/broadcast
 /broadcast/*/31337/
@@ -12,3 +15,4 @@ docs/
 
 # Dotenv file
 .env
+
