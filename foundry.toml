@@ -6,7 +6,14 @@ libs = ["lib"]
 
 version = "0.8.26" 
 
-remappings = ["@limit-order-protocol/=contracts/lib/limit-order-protocol/"]
+
+remappings = [
+    "@1inch/limit-order-protocol/=lib/limit-order-protocol/contracts/",
+    "@1inch/solidity-utils/=lib/solidity-utils/",
+    "@openzeppelin/=lib/openzeppelin-contracts/"
+]
+
+
 
 
 
