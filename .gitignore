@@ -1,0 +1,29 @@
+# Solidity build artifacts and cache
+out/
+cache/
+
+# Foundry local config and build files
+foundry.toml.lock
+broadcast/
+script/cache/
+
+# Node modules (if you have any JS tooling)
+node_modules/
+
+# Env files
+.env
+
+# VSCode settings
+.vscode/
+
+# Logs
+*.log
+
+# Ignore installed libraries, so they're not committed
+lib/
+
+# Optional: Ignore IDE files
+*.swp
+.idea/
+*.sublime-project
+*.sublime-workspace
