@@ -1,13 +1,17 @@
-//SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
 
 import {IOrderMixin} from "@1inch/limit-order-protocol/interfaces/IOrderMixin.sol";
 import {OrderEvents} from "./Events.sol";
 import {OrderLib} from "@1inch/limit-order-protocol/OrderLib.sol";
+import {MakerTraitsLib, MakerTraits} from "@1inch/limit-order-protocol/libraries/MakerTraitsLib.sol";
+import {TakerTraitsLib, TakerTraits} from "@1inch/limit-order-protocol/libraries/TakerTraitsLib.sol";
+
 import {IPermissionManager} from "./interface/IpermisionManager.sol";
 import {PermissionModifiers} from "./permissionModifer.sol";
 
 abstract contract SetterContract is OrderEvents {
+
     using PermissionModifiers for *;
 
     //// address ///////////
@@ -19,147 +23,103 @@ abstract contract SetterContract is OrderEvents {
     constructor() {}
 
     /**
-     * @notice Cancels order.
-     * @dev Order is cancelled by setting remaining amount to _ORDER_FILLED value
-     * @param order Order quote to cancel
-     * @return orderRemaining Unfilled amount of order before cancellation
-     * @return orderHash Hash of the filled order
-     */
-    function cancelOrder(OrderLib.Order calldata order) external returns (uint256 orderRemaining, bytes32 orderHash) {
-        IOrderMixin(ORDER_MIXIN_ADDRESS).cancelOrder(order);
-        emit OrderCanceled(order, orderRemaining, orderHash);
-        return (orderRemaining, orderHash);
-    }
-
-    /**
-     * @notice Fills an order. If one doesn't exist (first fill) it will be created using order.makerAssetData
-     * @param order Order quote to fill
-     * @param signature Signature to confirm quote ownership
-     * @param interaction A call data for InteractiveNotificationReceiver. Taker may execute interaction after getting maker assets and before sending taker assets.
-     * @param makingAmount Making amount
-     * @param takingAmount Taking amount
-     * @param skipPermitAndThresholdAmount Specifies maximum allowed takingAmount when takingAmount is zero, otherwise specifies minimum allowed makingAmount. Top-most bit specifies whether taker wants to skip maker's permit.
-     * @return actualMakingAmount Actual amount transferred from maker to taker
-     * @return actualTakingAmount Actual amount transferred from taker to maker
-     * @return orderHash Hash of the filled order
+     * @notice Fills order's quote, fully or partially (whichever is possible).
      */
     function fillOrder(
-        OrderLib.Order calldata order,
-        bytes calldata signature,
-        bytes calldata interaction,
-        uint256 makingAmount,
-        uint256 takingAmount,
-        uint256 skipPermitAndThresholdAmount
-    ) external payable returns (uint256 actualMakingAmount, uint256 actualTakingAmount, bytes32 orderHash) {
-        IOrderMixin(ORDER_MIXIN_ADDRESS).fillOrder(
-            order, signature, interaction, makingAmount, takingAmount, skipPermitAndThresholdAmount
-        );
-        emit FillOder(order, orderHash, actualMakingAmount, actualTakingAmount);
-        return (actualMakingAmount, actualTakingAmount, orderHash);
+        IOrderMixin.Order calldata order,
+        bytes32 r,
+        bytes32 vs,
+        uint256 amount,
+        TakerTraits takerTraits
+    ) external payable returns(uint256 makingAmount, uint256 takingAmount, bytes32 orderHash) {
+        (makingAmount, takingAmount, orderHash) = IOrderMixin(ORDER_MIXIN_ADDRESS).fillOrder(order, r, vs, amount, takerTraits);
+
+        emit FillOrder(order, amount, takerTraits);
+        return (makingAmount, takingAmount, orderHash);
     }
 
     /**
-     * @notice Same as `fillOrderTo` but calls permit first,
-     * allowing to approve token spending and make a swap in one transaction.
-     * Also allows to specify funds destination instead of `msg.sender`
-     * @dev See tests for examples
-     * @param order Order quote to fill
-     * @param signature Signature to confirm quote ownership
-     * @param interaction A call data for InteractiveNotificationReceiver. Taker may execute interaction after getting maker assets and before sending taker assets.
-     * @param makingAmount Making amount
-     * @param takingAmount Taking amount
-     * @param skipPermitAndThresholdAmount Specifies maximum allowed takingAmount when takingAmount is zero, otherwise specifies minimum allowed makingAmount. Top-most bit specifies whether taker wants to skip maker's permit.
-     * @param target Address that will receive swap funds
-     * @param permit Should consist of abiencoded token address and encoded `IERC20Permit.permit` call.
-     * @return actualMakingAmount Actual amount transferred from maker to taker
-     * @return actualTakingAmount Actual amount transferred from taker to maker
-     * @return orderHash Hash of the filled order
+     * @notice Same as `fillOrder` but allows to specify arguments used by the taker.
      */
-    function fillOrderToWithPermit(
-        OrderLib.Order calldata order,
-        bytes calldata signature,
-        bytes calldata interaction,
-        uint256 makingAmount,
-        uint256 takingAmount,
-        uint256 skipPermitAndThresholdAmount,
-        address target,
-        bytes calldata permit
-    ) external returns (uint256 actualMakingAmount, uint256 actualTakingAmount, bytes32 orderHash) {
-        IOrderMixin(ORDER_MIXIN_ADDRESS).fillOrderToWithPermit(
-            order, signature, interaction, makingAmount, takingAmount, skipPermitAndThresholdAmount, target, permit
-        );
-        emit FillOderToWithPermit(order, orderHash, actualMakingAmount, actualTakingAmount);
+    function fillOrderArgs(
+        IOrderMixin.Order calldata order,
+        bytes32 r,
+        bytes32 vs,
+        uint256 amount,
+        TakerTraits takerTraits,
+        bytes calldata args
+    ) external payable returns(uint256 makingAmount, uint256 takingAmount, bytes32 orderHash) {
+        (makingAmount, takingAmount, orderHash) = IOrderMixin(ORDER_MIXIN_ADDRESS).fillOrderArgs(order, r, vs, amount, takerTraits, args);
 
-        return (actualMakingAmount, actualTakingAmount, orderHash);
+        emit FillOrderArgs(order, amount, takerTraits, args);
+        return (makingAmount, takingAmount, orderHash);
     }
 
     /**
-     * @notice Same as `fillOrder` but allows to specify funds destination instead of `msg.sender`
-     * @param order_ Order quote to fill
-     * @param signature Signature to confirm quote ownership
-     * @param interaction A call data for InteractiveNotificationReceiver. Taker may execute interaction after getting maker assets and before sending taker assets.
-     * @param makingAmount Making amount
-     * @param takingAmount Taking amount
-     * @param skipPermitAndThresholdAmount Specifies maximum allowed takingAmount when takingAmount is zero, otherwise specifies minimum allowed makingAmount. Top-most bit specifies whether taker wants to skip maker's permit.
-     * @param target Address that will receive swap funds
-     * @return actualMakingAmount Actual amount transferred from maker to taker
-     * @return actualTakingAmount Actual amount transferred from taker to maker
-     * @return orderHash Hash of the filled order
+     * @notice Same as `fillOrder` but uses contract-based signatures.
      */
-    function fillOrderTo(
-        OrderLib.Order calldata order_,
+    function fillContractOrder(
+        IOrderMixin.Order calldata order,
         bytes calldata signature,
-        bytes calldata interaction,
-        uint256 makingAmount,
-        uint256 takingAmount,
-        uint256 skipPermitAndThresholdAmount,
-        address target
-    ) external payable returns (uint256 actualMakingAmount, uint256 actualTakingAmount, bytes32 orderHash) {
-        IOrderMixin(ORDER_MIXIN_ADDRESS).fillOrderTo(
-            order_, signature, interaction, makingAmount, takingAmount, skipPermitAndThresholdAmount, target
-        );
-        emit FillOderTo(order_, orderHash, actualMakingAmount, actualTakingAmount);
+        uint256 amount,
+        TakerTraits takerTraits
+    ) external returns(uint256 makingAmount, uint256 takingAmount, bytes32 orderHash) {
+        (makingAmount, takingAmount, orderHash) = IOrderMixin(ORDER_MIXIN_ADDRESS).fillContractOrder(order, signature, amount, takerTraits);
 
-        return (actualMakingAmount, actualTakingAmount, orderHash);
+        emit FillContractOrder(order, amount, takerTraits, orderHash, makingAmount, takingAmount);
+        return (makingAmount, takingAmount, orderHash);
     }
 
     /**
-     * @notice stimulates if an address ca transfer from
+     * @notice Cancels orders' quotes
+     */
+    function cancelOrders(MakerTraits[] calldata makerTraits, bytes32[] calldata orderHashes) external {
+        uint256 hashLen = orderHashes.length;
+        uint256 makelen = makerTraits.length;
+        require(makelen == hashLen, "SetterContract__length should be the same");
+
+        IOrderMixin(ORDER_MIXIN_ADDRESS).cancelOrders(makerTraits, orderHashes);
+
+        // Emit event per order cancelled
+        for (uint256 i = 0; i < hashLen; i++) {
+            emit OrderCancelled(makerTraits[i], orderHashes[i]);
+        }
+    }
+
+    /**
+     * @notice Simulates if an address can transfer from
      */
     function simulate(address target, bytes calldata data) external {
         IOrderMixin(ORDER_MIXIN_ADDRESS).simulate(target, data);
     }
 
     /**
-     * @notice Checks order predicate
-     * @return results Predicate evaluation result. True if predicate allows to fill the order, false otherwise
+     * @notice Returns bitmask for double-spend invalidators based on lowest byte of order.info and filled quotes
      */
-    function checkPredicate(OrderLib.Order calldata order) public returns (bool results) {
-        results = IOrderMixin(ORDER_MIXIN_ADDRESS).checkPredicate(order);
-        emit OrderPredicateCheck(order, results);
-        return results;
+    function remainingInvalidatorForOrder(address maker, bytes32 orderHash) external returns(uint256 remaining) {
+        remaining = IOrderMixin(ORDER_MIXIN_ADDRESS).remainingInvalidatorForOrder(maker, orderHash);
+        emit RemainingRawForOrder(orderHash, remaining, maker);
     }
 
     /**
-     * @notice returns unfilled amount for order
+     * @notice Returns bitmask for double-spend invalidators based on lowest byte of order.info and filled quotes
      */
-    function remainingRaw(bytes32 orderHash) public returns (uint256 _amountraw) {
-        _amountraw = IOrderMixin(ORDER_MIXIN_ADDRESS).remainingRaw(orderHash);
-        emit RemainingRawForOrder(orderHash, _amountraw);
-        return _amountraw;
+    function rawRemainingInvalidatorForOrder(address maker, bytes32 orderHash) external returns(uint256 remainingRaw) {
+        remainingRaw = IOrderMixin(ORDER_MIXIN_ADDRESS).rawRemainingInvalidatorForOrder(maker, orderHash);
+        emit RawRemainingInvalidatorForOrder(maker, orderHash, remainingRaw);
+        return remainingRaw;
     }
 
     /**
-     * @notice hash order
+     * @notice Hash order
      */
-    function hashOrder(OrderLib.Order calldata order) public view {
-        // hashes an order
-        IOrderMixin(ORDER_MIXIN_ADDRESS).hashOrder(order);
+    function hashOrder(IOrderMixin.Order calldata order) public view returns(bytes32 _orderHash) {
+        _orderHash = IOrderMixin(ORDER_MIXIN_ADDRESS).hashOrder(order);
     }
 
     /**
-     * @notice function to set contract addresss
-     * @notice only permision address
+     * @notice Function to set contract address
+     * @notice only permission address
      */
     function setContractAddress(address _orderMixin) public {
         ORDER_MIXIN_ADDRESS = _orderMixin;
