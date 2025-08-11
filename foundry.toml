@@ -8,9 +8,13 @@ version = "0.8.26"
 
 
 remappings = [
-    "@1inch/limit-order-protocol/=lib/limit-order-protocol/contracts/",
-    "@1inch/solidity-utils/=lib/solidity-utils/",
-    "@openzeppelin/=lib/openzeppelin-contracts/"
+  "@1inch/limit-order-protocol/=lib/limit-order-protocol/contracts/",
+  "@1inch/solidity-utils/=lib/solidity-utils/",
+  "@openzeppelin/=lib/openzeppelin-contracts/",
+  "@layerzerolabs/oapp-evm/=lib/devtools/packages/oapp-evm/",
+  "@layerzerolabs/lz-evm-protocol-v2/=lib/LayerZero-v2/packages/layerzero-v2/evm/protocol/",
+  "@layerzerolabs/lz-evm-messagelib-v2/=lib/LayerZero-v2/packages/layerzero-v2/evm/messagelib/",
+  "solidity-bytes-utils/=lib/solidity-bytes-utils/"
 ]
 
 
