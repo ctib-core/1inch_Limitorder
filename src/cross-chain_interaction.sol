@@ -12,6 +12,7 @@ import {OrderEvents} from "./Events.sol";
 import {OrderLib} from "@1inch/limit-order-protocol/OrderLib.sol";
 import {MakerTraitsLib, MakerTraits} from "@1inch/limit-order-protocol/libraries/MakerTraitsLib.sol";
 import {TakerTraitsLib, TakerTraits} from "@1inch/limit-order-protocol/libraries/TakerTraitsLib.sol";
+import {IPermissionManager} from "./interface/IpermisionManager.sol";
 contract Cross_Chain_Interaction is SetterContract, OApp, OAppOptionsType3 {
     /// @notice Last string received from any remote chain
     string public lastMessage;
@@ -36,9 +37,15 @@ contract Cross_Chain_Interaction is SetterContract, OApp, OAppOptionsType3 {
 
 
 
-    //////eerrros
-
-   error  Strategy__RequestAlreadyProcessed(bytes32 _requestId);
+    //////errors
+    error Strategy__RequestAlreadyProcessed(bytes32 _requestId);
+    error Strategy__UnknownMessageType(uint16 msgType);
+    error Strategy__OnlyOwner();
+    error Strategy__InvalidRecipient();
+    error Strategy__InsufficientBalance();
+    
+    //////events
+    event StateResponseReceived(bytes32 requestId, bool success, uint256 resultAmount, string errorMessage, uint32 dstEid, uint256 timestamp);
    
 
    
@@ -98,24 +105,28 @@ function _lzReceive(
         response.requestId,
         response.success,
         response.resultAmount,
-        response.errorMessage
+        response.errorMessage,
+        response.dstEid,
+        response.timestamp
     );
 }
 
 
-function _handlerFillOrderRequest(Origin calldata _origin, bytes memory _data) internal {
+function _handlerFillOrderRequest(Origin calldata _origin, bytes memory _data) internal returns (StateResponse memory response) {
     (
         IOrderMixin.Order memory order,
         bytes32 r,
         bytes32 vs,
         uint256 amount,
-        TakerTraits memory takerTraits
+        TakerTraits takerTraits
     ) = abi.decode(_data, (IOrderMixin.Order, bytes32, bytes32, uint256, TakerTraits));
 
-    if (processedRequests[order.info]) {
-        revert Strategy__RequestAlreadyProcessed(order.info);
+    bytes32 orderHash = keccak256(abi.encode(order));
+    
+    if (processedRequests[orderHash]) {
+        revert Strategy__RequestAlreadyProcessed(orderHash);
     }
-    processedRequests[order.info] = true;
+    processedRequests[orderHash] = true;
 
     (
         bool success,
@@ -125,26 +136,34 @@ function _handlerFillOrderRequest(Origin calldata _origin, bytes memory _data) i
         string memory errorMessage
     ) = _executeFillOrder(order, r, vs, amount, takerTraits);
 
-    emit CrossChainFillOrder(order.info, order.maker, makingAmount, takingAmount);
+    emit CrossChainFillOrder(orderHash, msg.sender, makingAmount, takingAmount);
 
-    bytes memory message = abi.encode(success, makingAmount, takingAmount, actualAmountIn, errorMessage);
-    _internalSendStateResponse(_origin.srcEid, message, "", 500000);
+    response = StateResponse({
+        requestId: orderHash,
+        success: success,
+        resultAmount: makingAmount,
+        errorMessage: errorMessage,
+        dstEid: _origin.srcEid,
+        timestamp: block.timestamp
+    });
 }
 
-function _handlerFillOrderArgsRequest(Origin calldata _origin, bytes memory _data) internal {
+function _handlerFillOrderArgsRequest(Origin calldata _origin, bytes memory _data) internal returns (StateResponse memory response) {
     (
         IOrderMixin.Order memory order,
         bytes32 r,
         bytes32 vs,
         uint256 amount,
-        TakerTraits memory takerTraits,
+        TakerTraits takerTraits,
         bytes memory args
     ) = abi.decode(_data, (IOrderMixin.Order, bytes32, bytes32, uint256, TakerTraits, bytes));
 
-    if (processedRequests[order.info]) {
-        revert Strategy__RequestAlreadyProcessed(order.info);
+    bytes32 orderHash = keccak256(abi.encode(order));
+    
+    if (processedRequests[orderHash]) {
+        revert Strategy__RequestAlreadyProcessed(orderHash);
     }
-    processedRequests[order.info] = true;
+    processedRequests[orderHash] = true;
 
     (
         bool success,
@@ -154,24 +173,32 @@ function _handlerFillOrderArgsRequest(Origin calldata _origin, bytes memory _dat
         string memory errorMessage
     ) = _executeFillOrderArgs(order, r, vs, amount, takerTraits, args);
 
-    emit CrossChainFillOrderArgs(order.info, order.maker, makingAmount, takingAmount);
+    emit CrossChainFillOrderArgs(orderHash, msg.sender, makingAmount, takingAmount);
 
-    bytes memory message = abi.encode(success, makingAmount, takingAmount, actualAmountIn, errorMessage);
-    _internalSendStateResponse(_origin.srcEid, message, "", 500000);
+    response = StateResponse({
+        requestId: orderHash,
+        success: success,
+        resultAmount: makingAmount,
+        errorMessage: errorMessage,
+        dstEid: _origin.srcEid,
+        timestamp: block.timestamp
+    });
 }
 
-function _handlerFillContractOrderRequest(Origin calldata _origin, bytes memory _data) internal {
+function _handlerFillContractOrderRequest(Origin calldata _origin, bytes memory _data) internal returns (StateResponse memory response) {
     (
         IOrderMixin.Order memory order,
         bytes memory signature,
         uint256 amount,
-        TakerTraits memory takerTraits
+        TakerTraits takerTraits
     ) = abi.decode(_data, (IOrderMixin.Order, bytes, uint256, TakerTraits));
 
-    if (processedRequests[order.info]) {
-        revert Strategy__RequestAlreadyProcessed(order.info);
+    bytes32 orderHash = keccak256(abi.encode(order));
+    
+    if (processedRequests[orderHash]) {
+        revert Strategy__RequestAlreadyProcessed(orderHash);
     }
-    processedRequests[order.info] = true;
+    processedRequests[orderHash] = true;
 
     (
         bool success,
@@ -181,13 +208,19 @@ function _handlerFillContractOrderRequest(Origin calldata _origin, bytes memory 
         string memory errorMessage
     ) = _executeFillContractOrder(order, signature, amount, takerTraits);
 
-    emit CrossChainFillContractOrder(order.info, order.maker, makingAmount, takingAmount);
+    emit CrossChainFillContractOrder(orderHash, msg.sender, makingAmount, takingAmount);
 
-    bytes memory message = abi.encode(success, makingAmount, takingAmount, actualAmountIn, errorMessage);
-    _internalSendStateResponse(_origin.srcEid, message, "", 500000);
+    response = StateResponse({
+        requestId: orderHash,
+        success: success,
+        resultAmount: makingAmount,
+        errorMessage: errorMessage,
+        dstEid: _origin.srcEid,
+        timestamp: block.timestamp
+    });
 }
 
-function _handlerCancelOrdersRequest(Origin calldata _origin, bytes memory _data) internal {
+function _handlerCancelOrdersRequest(Origin calldata _origin, bytes memory _data) internal returns (StateResponse memory response) {
     (
         MakerTraits[] memory makerTraits,
         bytes32[] memory orderHashes
@@ -205,8 +238,14 @@ function _handlerCancelOrdersRequest(Origin calldata _origin, bytes memory _data
         emit CrossChainCancelOrder(makerTraits[i], orderHashes[i]);
     }
 
-    bytes memory message = abi.encode(success, errorMessage);
-    _internalSendStateResponse(_origin.srcEid, message, "", 500000);
+    response = StateResponse({
+        requestId: requestId,
+        success: success,
+        resultAmount: orderHashes.length, // Number of orders cancelled
+        errorMessage: errorMessage,
+        dstEid: _origin.srcEid,
+        timestamp: block.timestamp
+    });
 }
 
     
@@ -256,7 +295,7 @@ function _handlerCancelOrdersRequest(Origin calldata _origin, bytes memory _data
         bytes32 vs,
         uint256 amount,
         TakerTraits takerTraits,
-        bytes calldata args
+        bytes memory args
     ) internal returns (
         bool success,
         uint256 makingAmount,
@@ -287,7 +326,7 @@ function _handlerCancelOrdersRequest(Origin calldata _origin, bytes memory _data
 
     function _executeFillContractOrder(
         IOrderMixin.Order memory order,
-        bytes calldata signature,
+        bytes memory signature,
         uint256 amount,
         TakerTraits takerTraits
 
@@ -320,8 +359,8 @@ function _handlerCancelOrdersRequest(Origin calldata _origin, bytes memory _data
     }
 
     function _executeCancelOrders(
-        MakerTraits[] calldata makerTraits,
-        bytes32[] calldata orderHashes
+        MakerTraits[] memory makerTraits,
+        bytes32[] memory orderHashes
     ) internal returns (bool success, string memory errorMessage) {
         try this.cancelOrders(makerTraits, orderHashes) {
             success = true;
@@ -344,9 +383,7 @@ function _handlerCancelOrdersRequest(Origin calldata _origin, bytes memory _data
         bytes memory message,
         bytes memory options,
         uint256 gasAmount
-    ) external payable {
-        // Only allow self-calls for security
-        if (msg.sender != address(this)) revert Strategy__OnlyOwner();
+    ) internal {
         
         // Limit gas usage to prevent draining contract balance
         uint256 maxGasForResponse = gasAmount / 2; // Use at most half of available balance
@@ -377,6 +414,16 @@ function _handlerCancelOrdersRequest(Origin calldata _origin, bytes memory _data
 
 
     
+    /// @notice Modifier to check if caller is owner and has permission for specific function
+    modifier onlyOwnerWithPermission(bytes4 functionSelector) {
+        require(owner() == msg.sender, "Cross_Chain_Interaction: caller is not the owner");
+        require(
+            IPermissionManager(PERMSSION_ADDRESS).hasPermissions(msg.sender, functionSelector),
+            "Cross_Chain_Interaction: not authorized"
+        );
+        _;
+    }
+
     /// @notice Allow contract to receive native tokens for gas fees
     receive() external payable {}
 
