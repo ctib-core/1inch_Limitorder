@@ -18,7 +18,7 @@ abstract contract SetterContract is OrderEvents {
     address public ORDER_MIXIN_ADDRESS;
     address public CREATE3_DEPLOYER_ADDRESS;
     address public AMOUNT_GETTER_ADDRESS;
-    address public ORDER_REGISTRATOR_ADDRESS;
+    address public PERMSSION_ADDRESS;
 
     constructor() {}
 
@@ -121,8 +121,9 @@ abstract contract SetterContract is OrderEvents {
      * @notice Function to set contract address
      * @notice only permission address
      */
-    function setContractAddress(address _orderMixin) public {
+    function setContractAddress(address _orderMixin, address _permission) public {
         ORDER_MIXIN_ADDRESS = _orderMixin;
+         PERMSSION_ADDRESS = _permission;
 
         emit OrderMixinAddressSet(_orderMixin);
     }

@@ -31,4 +31,41 @@ contract OrderEvents {
     event FillOrderArgs(IOrderMixin.Order order, uint256 amount, TakerTraits takerTraits, bytes args);
 
     event OrderCancelled(MakerTraits makerTraits, bytes32 orderHashes);
+
+
+
+    event CrossChainFillOrder(
+    bytes32 indexed orderId,
+    address indexed maker,
+    uint256 makingAmount,
+    uint256 takingAmount
+);
+
+event CrossChainFillOrderArgs(
+    bytes32 indexed orderId,
+    address indexed maker,
+    uint256 makingAmount,
+    uint256 takingAmount
+);
+
+event CrossChainFillContractOrder(
+    bytes32 indexed orderId,
+    address indexed maker,
+    uint256 makingAmount,
+    uint256 takingAmount
+);
+
+event CrossChainCancelOrder(
+    MakerTraits makerTraits,
+    bytes32 indexed orderHash
+);
+
+event CrossChainStateResponseReceived(
+    bytes32 indexed requestId,
+    bool success,
+    uint256 resultAmount,
+    string errorMessage
+);
+
+
 }
