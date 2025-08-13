@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.30;
+pragma solidity 0.8.23;
 
 import {IOrderMixin} from "@1inch/limit-order-protocol/interfaces/IOrderMixin.sol";
 import {OrderEvents} from "./Events.sol";
@@ -11,7 +11,6 @@ import {IPermissionManager} from "./interface/IpermisionManager.sol";
 import {PermissionModifiers} from "./permissionModifer.sol";
 
 abstract contract SetterContract is OrderEvents {
-
     using PermissionModifiers for *;
 
     //// address ///////////
@@ -31,8 +30,14 @@ abstract contract SetterContract is OrderEvents {
         bytes32 vs,
         uint256 amount,
         TakerTraits takerTraits
-    ) external payable returns(uint256 makingAmount, uint256 takingAmount, bytes32 orderHash) {
-        (makingAmount, takingAmount, orderHash) = IOrderMixin(ORDER_MIXIN_ADDRESS).fillOrder(order, r, vs, amount, takerTraits);
+    )
+        external
+        payable
+        returns (uint256 makingAmount, uint256 takingAmount, bytes32 orderHash)
+    {
+        (makingAmount, takingAmount, orderHash) = IOrderMixin(
+            ORDER_MIXIN_ADDRESS
+        ).fillOrder(order, r, vs, amount, takerTraits);
 
         emit FillOrder(order, amount, takerTraits);
         return (makingAmount, takingAmount, orderHash);
@@ -48,8 +53,14 @@ abstract contract SetterContract is OrderEvents {
         uint256 amount,
         TakerTraits takerTraits,
         bytes calldata args
-    ) external payable returns(uint256 makingAmount, uint256 takingAmount, bytes32 orderHash) {
-        (makingAmount, takingAmount, orderHash) = IOrderMixin(ORDER_MIXIN_ADDRESS).fillOrderArgs(order, r, vs, amount, takerTraits, args);
+    )
+        external
+        payable
+        returns (uint256 makingAmount, uint256 takingAmount, bytes32 orderHash)
+    {
+        (makingAmount, takingAmount, orderHash) = IOrderMixin(
+            ORDER_MIXIN_ADDRESS
+        ).fillOrderArgs(order, r, vs, amount, takerTraits, args);
 
         emit FillOrderArgs(order, amount, takerTraits, args);
         return (makingAmount, takingAmount, orderHash);
@@ -63,20 +74,38 @@ abstract contract SetterContract is OrderEvents {
         bytes calldata signature,
         uint256 amount,
         TakerTraits takerTraits
-    ) external returns(uint256 makingAmount, uint256 takingAmount, bytes32 orderHash) {
-        (makingAmount, takingAmount, orderHash) = IOrderMixin(ORDER_MIXIN_ADDRESS).fillContractOrder(order, signature, amount, takerTraits);
+    )
+        external
+        returns (uint256 makingAmount, uint256 takingAmount, bytes32 orderHash)
+    {
+        (makingAmount, takingAmount, orderHash) = IOrderMixin(
+            ORDER_MIXIN_ADDRESS
+        ).fillContractOrder(order, signature, amount, takerTraits);
 
-        emit FillContractOrder(order, amount, takerTraits, orderHash, makingAmount, takingAmount);
+        emit FillContractOrder(
+            order,
+            amount,
+            takerTraits,
+            orderHash,
+            makingAmount,
+            takingAmount
+        );
         return (makingAmount, takingAmount, orderHash);
     }
 
     /**
      * @notice Cancels orders' quotes
      */
-    function cancelOrders(MakerTraits[] calldata makerTraits, bytes32[] calldata orderHashes) external {
+    function cancelOrders(
+        MakerTraits[] calldata makerTraits,
+        bytes32[] calldata orderHashes
+    ) external {
         uint256 hashLen = orderHashes.length;
         uint256 makelen = makerTraits.length;
-        require(makelen == hashLen, "SetterContract__length should be the same");
+        require(
+            makelen == hashLen,
+            "SetterContract__length should be the same"
+        );
 
         IOrderMixin(ORDER_MIXIN_ADDRESS).cancelOrders(makerTraits, orderHashes);
 
@@ -96,16 +125,24 @@ abstract contract SetterContract is OrderEvents {
     /**
      * @notice Returns bitmask for double-spend invalidators based on lowest byte of order.info and filled quotes
      */
-    function remainingInvalidatorForOrder(address maker, bytes32 orderHash) external returns(uint256 remaining) {
-        remaining = IOrderMixin(ORDER_MIXIN_ADDRESS).remainingInvalidatorForOrder(maker, orderHash);
+    function remainingInvalidatorForOrder(
+        address maker,
+        bytes32 orderHash
+    ) external returns (uint256 remaining) {
+        remaining = IOrderMixin(ORDER_MIXIN_ADDRESS)
+            .remainingInvalidatorForOrder(maker, orderHash);
         emit RemainingRawForOrder(orderHash, remaining, maker);
     }
 
     /**
      * @notice Returns bitmask for double-spend invalidators based on lowest byte of order.info and filled quotes
      */
-    function rawRemainingInvalidatorForOrder(address maker, bytes32 orderHash) external returns(uint256 remainingRaw) {
-        remainingRaw = IOrderMixin(ORDER_MIXIN_ADDRESS).rawRemainingInvalidatorForOrder(maker, orderHash);
+    function rawRemainingInvalidatorForOrder(
+        address maker,
+        bytes32 orderHash
+    ) external returns (uint256 remainingRaw) {
+        remainingRaw = IOrderMixin(ORDER_MIXIN_ADDRESS)
+            .rawRemainingInvalidatorForOrder(maker, orderHash);
         emit RawRemainingInvalidatorForOrder(maker, orderHash, remainingRaw);
         return remainingRaw;
     }
@@ -113,7 +150,9 @@ abstract contract SetterContract is OrderEvents {
     /**
      * @notice Hash order
      */
-    function hashOrder(IOrderMixin.Order calldata order) public view returns(bytes32 _orderHash) {
+    function hashOrder(
+        IOrderMixin.Order calldata order
+    ) public view returns (bytes32 _orderHash) {
         _orderHash = IOrderMixin(ORDER_MIXIN_ADDRESS).hashOrder(order);
     }
 
@@ -121,9 +160,12 @@ abstract contract SetterContract is OrderEvents {
      * @notice Function to set contract address
      * @notice only permission address
      */
-    function setContractAddress(address _orderMixin, address _permission) public {
+    function setContractAddress(
+        address _orderMixin,
+        address _permission
+    ) public {
         ORDER_MIXIN_ADDRESS = _orderMixin;
-         PERMSSION_ADDRESS = _permission;
+        PERMSSION_ADDRESS = _permission;
 
         emit OrderMixinAddressSet(_orderMixin);
     }

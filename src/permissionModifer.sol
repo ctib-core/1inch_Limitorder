@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.27;
+pragma solidity 0.8.23;
 
 import {IPermissionManager} from "./interface/IpermisionManager.sol";
 
@@ -10,9 +10,15 @@ library PermissionModifiers {
     //  * @notice function selector to check
     //  * @author 0xodeili Lee
     //  */
-    modifier onlyWithPermission(address _permissionManager, bytes4 functionSelector) {
+    modifier onlyWithPermission(
+        address _permissionManager,
+        bytes4 functionSelector
+    ) {
         require(
-            IPermissionManager(_permissionManager).hasPermissions(msg.sender, functionSelector),
+            IPermissionManager(_permissionManager).hasPermissions(
+                msg.sender,
+                functionSelector
+            ),
             "PermissionModifier: not authorized"
         );
         _;
