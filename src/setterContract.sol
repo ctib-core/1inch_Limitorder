@@ -156,15 +156,6 @@ abstract contract SetterContract is OrderEvents {
         _orderHash = IOrderMixin(ORDER_MIXIN_ADDRESS).hashOrder(order);
     }
 
-<<<<<<< HEAD
-    // /**
-    //  * @notice Function to set contract address
-    //  * @notice only permission address
-    //  */
-    // function setContractAddress(address _orderMixin, address _permission) public {
-    //     ORDER_MIXIN_ADDRESS = _orderMixin;
-    //      PERMSSION_ADDRESS = _permission;
-=======
     /**
      * @notice Function to set contract address
      * @notice only permission address
@@ -175,8 +166,7 @@ abstract contract SetterContract is OrderEvents {
     ) public {
         ORDER_MIXIN_ADDRESS = _orderMixin;
         PERMSSION_ADDRESS = _permission;
->>>>>>> refs/remotes/origin/main
-
+    }
     //     emit OrderMixinAddressSet(_orderMixin);
     // }
 }
