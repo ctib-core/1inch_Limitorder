@@ -8,7 +8,7 @@ import "forge-std/Script.sol";
 
 contract DeployContract is Script {
 Cross_Chain_Interaction public cross;
-address public _endpoint;
+address public _endpoint = 0x1a44076050125825900e736c501f859c50fE728c;
 address public deployer;
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("ANVIL_PRIVATE_KEY");
@@ -17,7 +17,7 @@ address public deployer;
         vm.createSelectFork(vm.rpcUrl("anvillocal"));
         vm.startBroadcast(deployerPrivateKey);
 
-        console.log("Deploying contracts to ETH network...");
+        console.log("Deploying contracts to localchaiN network...");
         console.log("Deployer address:", deployer);
 
        deploy(deployer);

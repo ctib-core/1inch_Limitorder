@@ -58,13 +58,13 @@ ifeq ($(findstring --network avalanche,$(ARGS)),--network avalanche)
 endif
 
 deploy:
-	@forge script script/Deploy.s.sol: DeployContract  $(NETWORK_ARGS)
+	@forge script script/Deploy.s.sol:DeployContract  $(NETWORK_ARGS)
 
 deploy-base:
-	@forge script script/Deploy.s.sol: DeployContract  --rpc-url $(BASE_URL) --private-key $(PRIVATE_KEY) --broadcast --verify -vvvv
+	@forge script script/Deploy.s.sol:DeployContract  --rpc-url $(BASE_URL) --private-key $(PRIVATE_KEY) --broadcast --verify -vvvv
 
 deploy-local:
-	@forge script script/anvil.s.sol: DeployContract  --rpc-url $(ANVIL_URL) --private-key $(ANVIL_PRIVATE_KEY) --broadcast -vvvv
+	@forge script script/anvil.s.sol:DeployContract --rpc-url $(ANVIL_URL) --private-key $(ANVIL_PRIVATE_KEY) --broadcast -vvvv
 
 deploy-eth:
 	@forge script script/Deployccip.s.sol:DeployCCIP --rpc-url $(ETHEREUM_URL) --private-key $(PRIVATE_KEY) --broadcast -vvvv

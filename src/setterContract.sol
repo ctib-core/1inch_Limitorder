@@ -14,7 +14,7 @@ abstract contract SetterContract is OrderEvents {
     using PermissionModifiers for *;
 
     //// address ///////////
-    address public ORDER_MIXIN_ADDRESS = 0xc9F6a492Fb1D623690Dc065BBcEd6DfB4a324A35 ;
+    address public ORDER_MIXIN_ADDRESS =  0x119c71D3BbAC22029622cbaEc24854d3D32D2828 ;
     address public CREATE3_DEPLOYER_ADDRESS;
     address public AMOUNT_GETTER_ADDRESS;
     address public PERMSSION_ADDRESS  =0xc9F6a492Fb1D623690Dc065BBcEd6DfB4a324A35 ;

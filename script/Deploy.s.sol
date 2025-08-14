@@ -8,14 +8,14 @@ import "forge-std/Script.sol";
 
 contract DeployContract is Script {
 Cross_Chain_Interaction public cross;
-address public _endpoint;
+address public _endpoint = 0x1a44076050125825900e736c501f859c50fE728c;
 address public deployer;
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         deployer = vm.addr(deployerPrivateKey);
 
-        vm.createSelectFork(vm.rpcUrl("basechain"));
+        vm.createSelectFork(vm.rpcUrl("ethereum"));
         vm.startBroadcast(deployerPrivateKey);
 
         console.log("Deploying contracts to ETH network...");
