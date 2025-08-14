@@ -15,10 +15,10 @@ abstract contract SetterContract is OrderEvents {
     using PermissionModifiers for *;
 
     //// address ///////////
-    address public ORDER_MIXIN_ADDRESS;
+    address public ORDER_MIXIN_ADDRESS = 0xc9F6a492Fb1D623690Dc065BBcEd6DfB4a324A35 ;
     address public CREATE3_DEPLOYER_ADDRESS;
     address public AMOUNT_GETTER_ADDRESS;
-    address public PERMSSION_ADDRESS;
+    address public PERMSSION_ADDRESS  =0xc9F6a492Fb1D623690Dc065BBcEd6DfB4a324A35 ;
 
     constructor() {}
 
@@ -117,14 +117,14 @@ abstract contract SetterContract is OrderEvents {
         _orderHash = IOrderMixin(ORDER_MIXIN_ADDRESS).hashOrder(order);
     }
 
-    /**
-     * @notice Function to set contract address
-     * @notice only permission address
-     */
-    function setContractAddress(address _orderMixin, address _permission) public {
-        ORDER_MIXIN_ADDRESS = _orderMixin;
-         PERMSSION_ADDRESS = _permission;
+    // /**
+    //  * @notice Function to set contract address
+    //  * @notice only permission address
+    //  */
+    // function setContractAddress(address _orderMixin, address _permission) public {
+    //     ORDER_MIXIN_ADDRESS = _orderMixin;
+    //      PERMSSION_ADDRESS = _permission;
 
-        emit OrderMixinAddressSet(_orderMixin);
-    }
+    //     emit OrderMixinAddressSet(_orderMixin);
+    // }
 }
