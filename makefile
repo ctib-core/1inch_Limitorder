@@ -67,5 +67,5 @@ deploy-local:
 	@forge script script/anvil.s.sol:DeployContract --rpc-url $(ANVIL_URL) --private-key $(ANVIL_PRIVATE_KEY) --broadcast -vvvv
 
 deploy-eth:
-	@forge script script/Deployccip.s.sol:DeployCCIP --rpc-url $(ETHEREUM_URL) --private-key $(PRIVATE_KEY) --broadcast -vvvv
+	@forge script script/Deployccip.s.sol:DeployCCIP --rpc-url $(ETHEREUM_TESTNET) --private-key $(PRIVATE_KEY) --broadcast -vvvv
 

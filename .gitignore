@@ -28,3 +28,7 @@ cache/
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+
+# Dotenv file
+.env
